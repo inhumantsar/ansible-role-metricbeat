@@ -1,0 +1,10 @@
+### WARNING ##############################################
+# This file is managed by Ansible! 
+# Last Updated: {{ ansible_date_time.iso8601 }}
+##########################################################
+{% for cfg in metricbeat_module_configs[item] %}
+{# do statements aren't allowed in loops, but ifs are... #}
+{% set _ = cfg.update({'module': item}) %}
+{% endfor %}
+
+{{ metricbeat_module_configs[item] | to_nice_yaml }}

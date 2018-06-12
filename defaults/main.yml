@@ -1,0 +1,453 @@
+---
+metricbeat_repo_gpg_key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+metricbeat_repo_url: https://artifacts.elastic.co/packages/6.x # no trailing slash here
+
+# set to /usr/share/metricbeat if configuring the official docker image
+metricbeat_configs_path: /etc/metricbeat
+
+# Setup performs the following tasks:
+#  * Index mapping template in Elasticsearch to ensure fields are mapped.
+#  * Kibana dashboards (see below).
+#  * ML jobs (where available).
+metricbeat_setup_run: true
+
+# Kibana Dashboards - Need to specify your Kibana API endpoint
+metricbeat_setup_kibana_host: "localhost:5601"
+
+# The name of the shipper that publishes the network data. It can be used to group
+# all the transactions sent by a single shipper in the web interface.
+metricbeat_name: ~
+
+# The tags of the shipper are included in their own field with each
+# transaction published.  eg: `["service-X", "web-tier"]`
+metricbeat_tags: ~
+
+# Optional fields that you can specify to add additional information to the
+# output. eg: `env: staging`
+metricbeat_fields: ~
+
+
+###############################################################################
+### ELASTIC CLOUD CONFIGS
+###############################################################################
+metricbeat_elastic_cloud_id: ~
+metricbeat_elastic_cloud_auth: ~
+
+
+###############################################################################
+### OUTPUT CONFIGS
+###############################################################################
+# set hosts to ~ (null) to disable
+metricbeat_output_elasticsearch_hosts:
+  - "localhost:9200"
+
+metricbeat_output_elasticsearch_protocol: ~
+metricbeat_output_elasticsearch_username: elastic
+metricbeat_output_elasticsearch_password: changeme
+
+metricbeat_output_logstash_hosts: ~
+
+# optional list of SSL certificate authorities
+metricbeat_output_logstash_ssl_ca: ~
+
+# optional paths to an SSL cert & key
+metricbeat_output_logstash_ssl_cert: ~
+metricbeat_output_logstash_ssl_key: ~
+
+
+###############################################################################
+### LOGGING CONFIGS
+###############################################################################
+metricbeat_logging_level: info
+
+# At debug level, you can selectively enable logging only for some components.
+# To enable all selectors use ["*"]. Examples of other selectors are "beat",
+# "publish", "service".
+metricbeat_logging_selectors: ["*"]
+
+
+###############################################################################
+### LOGGING CONFIGS
+###############################################################################
+metricbeat_xpack_monitoring: false
+
+# this inherits settings from the output elasticsearch configs
+metricbeat_xpack_monitoring_elasticsearch_config: ~
+
+###############################################################################
+### MODULE CONFIGS
+###############################################################################
+# set to true to write disabled configs into files named 
+# modules.d/<module>.yml.disabled
+metricbeat_module_configs_write_disabled: false
+
+metricbeat_module_configs_enabled:
+  # - aerospike
+  # - apache
+  # - ceph
+  # - couchbase
+  # - docker
+  # - dropwizard
+  # - elasticsearch
+  # - etcd
+  # - golang
+  # - graphite
+  # - haproxy
+  # - http
+  # - jolokia
+  # - kafka
+  # - kibana
+  # - kubernetes
+  # - logstash
+  # - memcached
+  # - mongodb
+  # - mysql
+  # - nginx
+  # - php_fpm
+  # - postgresql
+  # - prometheus
+  # - rabbitmq
+  # - redis
+  - system
+  # - uwsgi
+  # - vsphere
+  # - windows
+  # - zookeeper
+
+# these are all upstream defaults
+metricbeat_module_configs:
+  system: 
+    - period: 10s
+      metricsets:
+        - cpu
+        - load
+        - memory
+        - network
+        - process
+        - process_summary
+        #- core
+        #- diskio
+        #- socket
+      processes: ['.*']
+      process.include_top_n:
+        by_cpu: 5      # include top 5 processes by CPU
+        by_memory: 5   # include top 5 processes by memory
+    - period: 1m
+      metricsets:
+        - filesystem
+        - fsstat
+      processors:
+      - drop_event.when.regexp:
+          system.filesystem.mount_point: '^/(sys|cgroup|proc|dev|etc|host|lib)($|/)'
+    - period: 15m
+      metricsets:
+        - uptime
+
+  aerospike:
+    - metricsets: ["namespace"]
+      enabled: false
+      period: 10s
+      hosts: ["localhost:3000"]
+
+  apache:
+    - metricsets: ["status"]
+      period: 10s
+      hosts: ["http://127.0.0.1"]
+
+  ceph:
+    - metricsets: 
+        - "cluster_disk"
+        - "cluster_health"
+        - "monitor_health"
+        - "pool_disk"
+        - "osd_tree"
+      period: 10s
+      hosts: ["localhost:5000"]
+
+  couchbase:
+    - metricsets: ["bucket", "cluster", "node"]
+      period: 10s
+      hosts: ["localhost:8091"]
+
+  docker:
+    - metricsets: ["container", "cpu", "diskio", "healthcheck", "info", "memory", "network"]
+      hosts: ["unix:///var/run/docker.sock"]
+      period: 10s
+      #ssl:     # for tls connections to docker host
+        #certificate_authority: "/etc/pki/root/ca.pem"
+        #certificate:           "/etc/pki/client/cert.pem"
+        #key:                   "/etc/pki/client/cert.key"
+
+  dropwizard:
+    - metricsets: ["collector"]
+      period: 10s
+      hosts: ["localhost:8080"]
+      metrics_path: /metrics/metrics
+      namespace: example
+
+  elasticsearch:
+    - metricsets: ["node", "node_stats"]
+      period: 10s
+      hosts: ["localhost:9200"]
+
+  etcd:
+    - metricsets: ["leader", "self", "store"]
+      period: 10s
+      hosts: ["localhost:2379"]
+
+  golang:
+    - metricsets: ["expvar","heap"]
+      period: 10s
+      hosts: ["localhost:6060"]
+      heap.path: "/debug/vars"
+      expvar:
+        namespace: "example"
+        path: "/debug/vars"
+
+  graphite:
+    - metricsets: ["server"]
+      enabled: true
+    #  protocol: "udp"
+    #  templates:
+    #    - filter: "test.*.bash.*" # This would match metrics like test.localhost.bash.stats
+    #      namespace: "test"
+    #      template: ".host.shell.metric*" # test.localhost.bash.stats would become metric=stats and tags host=localhost,shell=bash
+    #      delimiter: "_"
+
+  haproxy:
+    - metricsets: ["info", "stat"]
+      period: 10s
+      hosts: ["tcp://127.0.0.1:14567"]
+
+  http:
+    - metricsets: ["json"]
+      period: 10s
+      hosts: ["localhost:80"]
+      namespace: "json_namespace"
+      path: "/"
+      # body: ""
+      # method: "GET"
+      # request.enabled: false
+      # response.enabled: false
+      # dedot.enabled: false
+    - metricsets: ["server"]
+      host: "localhost"
+      port: "8080"
+      enabled: false
+      paths:
+        - path: "/foo"
+          namespace: "foo"
+          fields: # added to the the response in root. overwrites existing fields
+            key: "value"
+
+  jolokia:
+    - metricsets: ["jmx"]
+      period: 10s
+      hosts: ["localhost"]
+      namespace: "metrics"
+      path: "/jolokia/?ignoreErrors=true&canonicalNaming=false"
+      # jmx.mapping:
+      # jmx.application:
+      # jmx.instance:
+  
+  kafka:
+    - metricsets: ["partition"]
+      period: 10s
+      hosts: ["localhost:9092"]
+      # client_id: metricbeat
+      # retries: 3
+      # backoff: 250ms
+
+      # List of Topics to query metadata for. If empty, all topics will be queried.
+      # topics: []
+
+      # Optional SSL. By default is off.
+      # List of root certificates for HTTPS server verifications
+      # ssl.certificate_authorities: ["/etc/pki/root/ca.pem"]
+
+      # Certificate for SSL client authentication
+      # ssl.certificate: "/etc/pki/client/cert.pem"
+
+      # Client Certificate Key
+      # ssl.key: "/etc/pki/client/cert.key"
+
+      # SASL authentication
+      # username: ""
+      # password: ""
+  
+  kibana:
+    - metricsets: ["status"]
+      period: 10s
+      hosts: ["localhost:5601"]
+
+  kubernetes:
+    # Node metrics, from kubelet:
+    - metricsets:
+        - node
+        - system
+        - pod
+        - container
+        - volume
+      period: 10s
+      hosts: ["localhost:10255"]
+
+    # State metrics from kube-state-metrics service:
+    # - metricsets:
+    #     - state_node
+    #     - state_deployment
+    #     - state_replicaset
+    #     - state_pod
+    #     - state_container
+    #   period: 10s
+    #   hosts: ["kube-state-metrics:8080"]
+
+    # Kubernetes events
+    # - metricsets:
+    #     - event
+
+  logstash:
+    - metricsets: ["node", "node_stats"]
+      period: 10s
+      hosts: ["localhost:9600"]
+
+  memcached:
+    - metricsets: ["stats"]
+      period: 10s
+      hosts: ["localhost:11211"]
+  
+  mongodb:
+    - metricsets: ["dbstats", "status"]
+      period: 10s
+      # The hosts must be passed as MongoDB URLs in the format:
+      # [mongodb://][user:pass@]host[:port].
+      # The username and password can also be set using the respective configuration
+      # options. The credentials in the URL take precedence over the username and
+      # password configuration options.
+      hosts: ["localhost:27017"]
+      
+      # credentials are EMPTY by default
+      # username: user
+      # password: pass
+      
+  mysql:
+    - metricsets: ["status"]
+      period: 10s
+
+      # Host DSN should be defined as "user:pass@tcp(127.0.0.1:3306)/"
+      # The username and password can either be set in the DSN or using the username
+      # and password config options. Those specified in the DSN take precedence.
+      hosts: ["root:secret@tcp(127.0.0.1:3306)/"]
+
+      # credentials are EMPTY by default
+      # username: root
+      # password: secret
+
+      # By setting raw to true, all raw fields from the status metricset will be added to the event.
+      # raw: false
+
+  nginx:
+    - metricsets: ["stubstatus"]
+      period: 10s
+
+      # Nginx hosts
+      hosts: ["http://127.0.0.1"]
+
+      # Path to server status. Default server-status
+      # server_status_path: "server-status"
+
+  php_fpm:
+    - metricsets: ["pool"]
+      period: 10s
+      status_path: "/status"
+      hosts: ["localhost:8080"]
+
+  postgresql:
+    - metricsets:
+        # Stats about every PostgreSQL database
+        - database
+
+        # Stats about the background writer process's activity
+        - bgwriter
+
+        # Stats about every PostgreSQL process
+        - activity
+
+      period: 10s
+
+      # The host must be passed as PostgreSQL URL. Example:
+      # postgres://localhost:5432?sslmode=disable
+      # The available parameters are documented here:
+      # https://godoc.org/github.com/lib/pq#hdr-Connection_String_Parameters
+      hosts: ["postgres://localhost:5432"]
+
+      # credentials are EMPTY by default
+      # username: user
+      # password: pass
+      
+  rabbitmq:
+    - metricsets: ["node", "queue"]
+      period: 10s
+      hosts: ["localhost:15672"]
+
+      username: guest
+      password: guest
+
+  redis:
+    - metricsets: ["info", "keyspace"]
+      period: 10s
+
+      # Redis hosts
+      hosts: ["127.0.0.1:6379"]
+
+      # Timeout after which time a metricset should return an error
+      # Timeout is by default defined as period, as a fetch of a metricset
+      # should never take longer then period, as otherwise calls can pile up.
+      #timeout: 1s
+
+      # Optional fields to be added to each event
+      #fields:
+      #  datacenter: west
+
+      # Network type to be used for redis connection. Default: tcp
+      #network: tcp
+
+      # Max number of concurrent connections. Default: 10
+      #maxconn: 10
+
+      # Filters can be used to reduce the number of fields sent.
+      #processors:
+      #  - include_fields:
+      #      fields: ["beat", "metricset", "redis.info.stats"]
+
+      # Redis AUTH password. Empty by default.
+      #password: foobared
+
+  uwsgi:
+    - metricsets: ["status"]
+      period: 10s
+      hosts: ["tcp://127.0.0.1:9191"]
+
+  vsphere:
+    - metricsets: ["datastore", "host", "virtualmachine"]
+      period: 10s
+      hosts: ["https://localhost/sdk"]
+
+      username: "user"
+      password: "password"
+      # If insecure is true, don't verify the server's certificate chain
+      insecure: false
+      # Get custom fields when using virtualmachine metric set. Default false.
+      # get_custom_fields: false
+      
+  windows:
+    - metricsets: ["perfmon"]
+      period: 10s
+      perfmon.counters:
+    - metricsets: ["service"]
+      period: 60s
+  
+  zookeeper:
+    - metricsets: ["mntr"]
+      period: 10s
+      hosts: ["localhost:2181"]
+  

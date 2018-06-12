@@ -1,0 +1,75 @@
+---
+metricbeat_repo_gpg_key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+metricbeat_repo_url: https://artifacts.elastic.co/packages/6.x # no trailing slash here
+
+# set to /usr/share/metricbeat if configuring the official docker image
+metricbeat_configs_path: /etc/metricbeat
+
+# Setup performs the following tasks:
+#  * Index mapping template in Elasticsearch to ensure fields are mapped.
+#  * Kibana dashboards (see below).
+#  * ML jobs (where available).
+metricbeat_setup_run: true
+
+# Kibana Dashboards - Need to specify your Kibana API endpoint
+metricbeat_setup_kibana_host: "kibana:5601"
+
+# The name of the shipper that publishes the network data. It can be used to group
+# all the transactions sent by a single shipper in the web interface.
+metricbeat_name: 'some_metricbeat_name'
+
+# The tags of the shipper are included in their own field with each
+# transaction published.  eg: `["service-X", "web-tier"]`
+metricbeat_tags: ['tag1', 'tag2']
+
+# Optional fields that you can specify to add additional information to the
+# output. eg: `env: staging`
+metricbeat_fields: {env: staging}
+
+
+###############################################################################
+### ELASTIC CLOUD CONFIGS
+###############################################################################
+metricbeat_elastic_cloud_id: 'someid'
+metricbeat_elastic_cloud_auth: 'somelongasstokenprobably'
+
+
+###############################################################################
+### OUTPUT CONFIGS
+###############################################################################
+# set hosts to ~ (null) to disable
+metricbeat_output_elasticsearch_hosts:
+  - "localhost:9200"
+
+metricbeat_output_elasticsearch_protocol: 'https'
+metricbeat_output_elasticsearch_username: 'jimbob'
+metricbeat_output_elasticsearch_password: 'mootoothree'
+
+metricbeat_output_logstash_hosts: ['1.2.3.4:80']
+
+# optional list of SSL certificate authorities
+metricbeat_output_logstash_ssl_ca: ['someca']
+
+# optional paths to an SSL cert & key
+metricbeat_output_logstash_ssl_cert: '/etc/ssl/cert'
+metricbeat_output_logstash_ssl_key: '/etc/ssl/key'
+
+
+###############################################################################
+### LOGGING CONFIGS
+###############################################################################
+metricbeat_logging_level: debug
+
+# At debug level, you can selectively enable logging only for some components.
+# To enable all selectors use ["*"]. Examples of other selectors are "beat",
+# "publish", "service".
+metricbeat_logging_selectors: ["*"]
+
+
+###############################################################################
+### LOGGING CONFIGS
+###############################################################################
+metricbeat_xpack_monitoring: true
+
+# this inherits settings from the output elasticsearch configs
+metricbeat_xpack_monitoring_elasticsearch_config: {somesetting: 'someval'}

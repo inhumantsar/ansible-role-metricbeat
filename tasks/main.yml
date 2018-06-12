@@ -1,0 +1,55 @@
+---
+# tasks file for metricbeat
+- debug: msg="Starting tasks from metricbeat..."
+
+- name: 'setup debian repo'
+  include_tasks: tasks/debian.yml
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: 'setup enterprise linux repo'
+  include_tasks: tasks/el.yml
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: install metricbeat
+  package: name=metricbeat
+
+- name: 'enable service'
+  service:
+    name: metricbeat
+    state: stopped
+    enabled: yes
+
+- name: 'write main config file'
+  template:
+    dest: "{{ metricbeat_configs_path }}/metricbeat.yml"
+    mode: "u=rw,g=r,o=r"
+    owner: root
+    group: root
+    src: templates/metricbeat.j2
+
+
+- name: 'write only enabled metricbeat module config files'
+  template:
+    dest: "{{ metricbeat_configs_path }}/modules.d/{{ item }}.yml"
+    mode: "u=rw,g=r,o=r"
+    owner: root
+    group: root
+    src: templates/module.j2
+  with_items: "{{ metricbeat_module_configs_enabled }}"
+
+- name: 'write disabled metricbeat module config files'
+  template:
+    dest: "{{ metricbeat_configs_path }}/modules.d/{{ item }}.yml.disabled"
+    mode: "u=rw,g=r,o=r"
+    owner: root
+    group: root
+    src: templates/module.j2
+  with_items: "{{ metricbeat_module_configs }}"
+  when: 
+    - metricbeat_module_configs_write_disabled
+    - item not in metricbeat_module_configs_enabled
+
+- name: 'creating metricbeat indexes and dashboards'
+  shell: metricbeat setup
+  when:
+    - metricbeat_setup_run

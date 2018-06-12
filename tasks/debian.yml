@@ -1,0 +1,19 @@
+---
+- name: add apt repo key
+  apt_key:
+    url: "{{ metricbeat_repo_gpg_key }}"
+
+- name: install apt-transport-https
+  package: name=apt-transport-https
+
+- name: install python-apt
+  package: name=python-apt
+  when: 'ansible_python_version is match("^2\.")'
+
+- name: install python3-apt
+  package: name=python3-apt
+  when: 'ansible_python_version is match("^3\.")'
+
+- name: add apt repo
+  apt_repository:
+    repo: "deb {{ metricbeat_repo_url }}/apt stable main"

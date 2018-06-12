@@ -1,0 +1,26 @@
+image: docker:stable
+
+# note: this does not test kibana setup capabilities.
+
+variables:
+  DOCKER_DRIVER: "overlay2"
+  CLUSTER_NAME: "elasticsearch"
+  NETWORK_HOST: "_site_"
+  GATEWAY_EXPECTED_NODES: "1"
+
+services:
+  - docker:dind
+  - name: docker.elastic.co/elasticsearch/elasticsearch:6.2.4
+    alias: elasticsearch
+
+test:
+  image: inhumantsar/ansible:centos7
+  variables:
+    WORKDIR: "$CI_PROJECT_DIR"
+  script: 
+    - pip install -r "${CI_PROJECT_DIR}/requirements_dev.txt"
+    - python -m pytest
+    # using block string because it's more readable than escaping quotes
+    - |
+      /start.sh -vvv -e '{metricbeat_output_elasticsearch_hosts: ["elasticsearch:9200"], metricbeat_setup_run: false}'
+

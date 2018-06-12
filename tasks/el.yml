@@ -1,0 +1,12 @@
+---
+- name: add rpm signing key
+  rpm_key:
+    key: "{{ metricbeat_repo_gpg_key }}"
+
+- name: add yum repo
+  yum_repository:
+    name: elastic-6.x
+    description: Elastic repo for 6.x packages
+    baseurl: "{{ metricbeat_repo_url }}/yum"
+    gpgcheck: yes
+    gpgkey: "{{ metricbeat_repo_gpg_key }}"
