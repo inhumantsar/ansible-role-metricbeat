@@ -24,12 +24,11 @@
     state: directory
     owner: root
     group: root
-    mode: 0755
+    mode: "u=rwx,g=rx,o=rx"
     path: "{{ item }}"
   with_items:
     - "{{ metricbeat_configs_path }}"
     - "{{ metricbeat_configs_path }}/modules.d"
-
 
 - name: 'write main config file'
   template:
@@ -38,7 +37,6 @@
     owner: root
     group: root
     src: templates/metricbeat.j2
-
 
 - name: 'write only enabled metricbeat module config files'
   template:
@@ -60,6 +58,21 @@
   when: 
     - metricbeat_module_configs_write_disabled
     - item not in metricbeat_module_configs_enabled
+
+- name: 'check for metricbeat.sh'
+  stat:
+    path: /usr/bin/metricbeat.sh
+  register: stat_script
+
+- name: 'symlink metricbeat.sh if necessary'
+  file:
+    state: link
+    mode: "u=rwx,g=rx,o=rx"
+    owner: root
+    group: root
+    src: /usr/bin/metricbeat.sh
+    dest: /usr/bin/metricbeat
+  when: stat_script.stat.exists
 
 - name: 'creating metricbeat indexes and dashboards'
   shell: metricbeat setup
