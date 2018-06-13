@@ -19,6 +19,18 @@
     state: stopped
     enabled: yes
 
+- name: 'create config directories'
+  file:
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+    path: "{{ item }}"
+  with_items:
+    - "{{ metricbeat_configs_path }}"
+    - "{{ metricbeat_configs_path }}/modules.d"
+
+
 - name: 'write main config file'
   template:
     dest: "{{ metricbeat_configs_path }}/metricbeat.yml"
